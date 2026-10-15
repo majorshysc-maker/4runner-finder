@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>4Runner Finder QC & ON</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        toyota: { 600: '#dc2626', 700: '#b91c1c' }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Custom scrollbars for smooth mobile feeling */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #18181b; }
+        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 2px; }
+    </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col antialiased selection:bg-red-600 selection:text-white">
+
+    <!-- Top Navigation Bar -->
+    <header class="sticky top-0 z-40 bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 px-4 py-3">
+        <div class="max-w-md mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <div class="bg-red-600 p-2 rounded-xl text-white shadow-lg shadow-red-600/30">
+                    <i class="fa-solid fa-truck-monster text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base leading-tight tracking-tight">4Runner Radar</h1>
+                    <p class="text-xs text-zinc-400">QC & ON • &lt; $15K • &lt; 250k km</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="openScraperModal()" class="relative bg-zinc-800 hover:bg-zinc-700 p-2.5 rounded-xl text-zinc-300 transition active:scale-95" title="Scraper Status">
+                    <i class="fa-solid fa-satellite-dish text-sm"></i>
+                    <span class="absolute top-1 right-1 w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                </button>
+                <button onclick="openAlertsModal()" class="bg-zinc-800 hover:bg-zinc-700 p-2.5 rounded-xl text-zinc-300 transition active:scale-95" title="Saved Alerts">
+                    <i class="fa-solid fa-bell text-sm"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-md w-full mx-auto p-4 pb-24 space-y-4">
+
+        <!-- Search & Filter Bar -->
+        <div class="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-3.5 space-y-3 backdrop-blur-sm shadow-xl">
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-zinc-500 text-sm"></i>
+                <input type="text" id="searchInput" oninput="filterListings()" placeholder="Search city, trim, year (e.g. SR5, Montreal)..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-red-600 transition">
+            </div>
+
+            <!-- Quick Filter Pills -->
+            <div class="flex items-center space-x-2 overflow-x-auto pb-1 no-scrollbar text-xs">
+                <button onclick="setProvinceFilter('ALL')" id="pill-ALL" class="province-pill px-3 py-1.5 rounded-lg font-medium whitespace-nowrap bg-red-600 text-white transition">All QC & ON</button>
+                <button onclick="setProvinceFilter('QC')" id="pill-QC" class="province-pill px-3 py-1.5 rounded-lg font-medium whitespace-nowrap bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition">Quebec only</button>
+                <button onclick="setProvinceFilter('ON')" id="pill-ON" class="province-pill px-3 py-1.5 rounded-lg font-medium whitespace-nowrap bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition">Ontario only</button>
+                <button onclick="toggleAdvancedFilters()" class="px-3 py-1.5 rounded-lg font-medium whitespace-nowrap bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition flex items-center space-x-1">
+                    <i class="fa-solid fa-sliders text-[10px]"></i>
+                    <span>Filters</span>
+                </button>
+            </div>
+
+            <!-- Expandable Advanced Filters Drawer -->
+            <div id="advancedFilters" class="hidden pt-3 border-t border-zinc-800/80 space-y-3 text-xs">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-zinc-400 mb-1">Max Price: $<span id="priceVal">15,000</span></label>
+                        <input type="range" id="maxPriceRange" min="5000" max="15000" step="500" value="15000" oninput="updateFilters()" class="w-full accent-red-600 bg-zinc-800 rounded-lg h-2 cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-zinc-400 mb-1">Max Mileage: <span id="kmVal">250</span>k km</label>
+                        <input type="range" id="maxKmRange" min="150" max="250" step="5" value="250" oninput="updateFilters()" class="w-full accent-red-600 bg-zinc-800 rounded-lg h-2 cursor-pointer">
+                    </div>
+                </div>
+                <div class="flex items-center justify-between pt-1">
+                    <span class="text-zinc-400">Sort by:</span>
+                    <select id="sortBy" onchange="filterListings()" class="bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1 text-zinc-300 focus:outline-none focus:border-red-600">
+                        <option value="newest">Newest Found</option>
+                        <option value="price-asc">Price: Low to High</option>
+                        <option value="km-asc">Mileage: Lowest</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Header & Stats -->
+        <div class="flex items-center justify-between px-1">
+            <span id="resultsCount" class="text-xs font-medium text-zinc-400">Loading active listings...</span>
+            <div class="flex items-center space-x-2">
+                <span class="inline-flex items-center text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium">
+                    <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1.5 animate-pulse"></span> Live Feeds Active
+                </span>
+            </div>
+        </div>
+
+        <!-- Listings Container -->
+        <div id="listingsContainer" class="space-y-3.5">
+            <!-- Dynamic Cards Injected Here -->
+        </div>
+
+        <!-- Empty State (Hidden by default) -->
+        <div id="emptyState" class="hidden text-center py-12 px-4 space-y-3">
+            <div class="w-14 h-14 bg-zinc-900 border border-zinc-800 rounded-full flex items-center justify-center mx-auto text-zinc-500 text-xl">
+                <i class="fa-solid fa-car-burst"></i>
+            </div>
+            <h3 class="font-semibold text-zinc-200">No 4Runners match criteria</h3>
+            <p class="text-xs text-zinc-400 max-w-xs mx-auto">Try loosening your price or mileage filters, or set a push alert to be notified instantly when one drops.</p>
+            <button onclick="resetFilters()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-xs font-medium transition">Reset Filters</button>
+        </div>
+
+    </main>
+
+    <!-- Floating Bottom Action Bar -->
+    <div class="fixed bottom-0 left-0 right-0 z-30 bg-zinc-900/95 backdrop-blur-md border-t border-zinc-800 p-3">
+        <div class="max-w-md mx-auto flex items-center justify-between gap-3">
+            <button onclick="openAlertsModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium py-2.5 px-4 rounded-xl text-xs flex items-center justify-center space-x-2 transition active:scale-95">
+                <i class="fa-solid fa-bell text-red-500"></i>
+                <span>Save Alert & Push</span>
+            </button>
+            <button onclick="simulateNewListing()" class="bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 px-4 rounded-xl text-xs flex items-center justify-center space-x-2 shadow-lg shadow-red-600/30 transition active:scale-95">
+                <i class="fa-solid fa-bolt"></i>
+                <span>Simulate New Find</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Vehicle Detail Modal -->
+    <div id="detailModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity">
+        <div class="bg-zinc-900 border border-zinc-800 w-full max-w-md rounded-t-3xl sm:rounded-2xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
+            <div id="modalContent" class="p-5 space-y-4">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scraper Status Modal -->
+    <div id="scraperModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-zinc-800 w-full max-w-md rounded-2xl p-5 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-satellite-dish text-red-500"></i>
+                    <h3 class="font-bold text-sm">Aggregator & Scraper Status</h3>
+                </div>
+                <button onclick="closeScraperModal()" class="text-zinc-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <p class="text-xs text-zinc-400">Our background workers poll Canadian automotive classified platforms every 15 minutes for fresh 4Runner deals under your thresholds.</p>
+            
+            <div class="space-y-2.5 text-xs">
+                <div class="bg-zinc-950 p-3 rounded-xl border border-zinc-800 flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center font-bold">AT</div>
+                        <div>
+                            <p class="font-medium text-zinc-200">AutoTrader Canada</p>
+                            <p class="text-[10px] text-zinc-500">QC & ON Regional Nodes</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1"></span>
+                        <span class="text-[11px] text-emerald-400 font-medium">Synced 3m ago</span>
+                        <p class="text-[10px] text-zinc-500">14 active matches</p>
+                    </div>
+                </div>
+
+                <div class="bg-zinc-950 p-3 rounded-xl border border-zinc-800 flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold">K</div>
+                        <div>
+                            <p class="font-medium text-zinc-200">Kijiji Autos</p>
+                            <p class="text-[10px] text-zinc-500">Greater Montreal & Toronto</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1"></span>
+                        <span class="text-[11px] text-emerald-400 font-medium">Synced 7m ago</span>
+                        <p class="text-[10px] text-zinc-500">9 active matches</p>
+                    </div>
+                </div>
+
+                <div class="bg-zinc-950 p-3 rounded-xl border border-zinc-800 flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold">FB</div>
+                        <div>
+                            <p class="font-medium text-zinc-200">Facebook Marketplace</p>
+                            <p class="text-[10px] text-zinc-500">Ontario & Quebec Geofence</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1"></span>
+                        <span class="text-[11px] text-emerald-400 font-medium">Synced 1m ago</span>
+                        <p class="text-[10px] text-zinc-500">18 active matches</p>
+                    </div>
+                </div>
+
+                <div class="bg-zinc-950 p-3 rounded-xl border border-zinc-800 flex items-center justify-between">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center font-bold">LP</div>
+                        <div>
+                            <p class="font-medium text-zinc-200">LesPAC</p>
+                            <p class="text-[10px] text-zinc-500">Quebec Provincial Network</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1"></span>
+                        <span class="text-[11px] text-emerald-400 font-medium">Synced 12m ago</span>
+                        <p class="text-[10px] text-zinc-500">5 active matches</p>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="closeScraperModal()" class="w-full bg-zinc-800 hover:bg-zinc-700 py-2.5 rounded-xl font-medium text-xs transition">Close Status</button>
+        </div>
+    </div>
+
+    <!-- Saved Alerts Modal -->
+    <div id="alertsModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-zinc-800 w-full max-w-md rounded-2xl p-5 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-bell text-red-500"></i>
+                    <h3 class="font-bold text-sm">Price Drop & New Listing Alerts</h3>
+                </div>
+                <button onclick="closeAlertsModal()" class="text-zinc-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <p class="text-xs text-zinc-400">Get simulated instant notifications when a clean frame 4Runner under $15k is posted in QC or ON.</p>
+            
+            <div class="space-y-3 bg-zinc-950 p-3.5 rounded-xl border border-zinc-800 text-xs">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="font-medium text-zinc-200">Push Notifications</p>
+                        <p class="text-[10px] text-zinc-500">Instant browser ping on new match</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="pushToggle" checked class="sr-only peer" onchange="showToast('Notification settings updated!')">
+                        <div class="w-9 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-600"></div>
+                    </label>
+                </div>
+                <div class="pt-2 border-t border-zinc-800/80">
+                    <label class="block text-zinc-400 mb-1">Alert Email / SMS Webhook</label>
+                    <div class="flex space-x-2">
+                        <input type="email" id="alertEmail" value="driver@quebec-ontario.ca" class="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-zinc-200 focus:outline-none focus:border-red-600">
+                        <button onclick="showToast('Alert preferences saved successfully!')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg font-medium transition">Save</button>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="closeAlertsModal()" class="w-full bg-zinc-800 hover:bg-zinc-700 py-2.5 rounded-xl font-medium text-xs transition">Done</button>
+        </div>
+    </div>
+
+    <!-- Toast Notification Overlay -->
+    <div id="toast" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-zinc-900 border border-zinc-700 text-zinc-200 px-4 py-2.5 rounded-2xl shadow-2xl text-xs font-medium flex items-center space-x-2.5 transition-all duration-300 opacity-0 pointer-events-none translate-y-[-10px]">
+        <i class="fa-solid fa-circle-check text-emerald-500"></i>
+        <span id="toastText">Action successful</span>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Initial Dataset of 4Runners in Quebec & Ontario under $15k & <250k km
+        let listings = [
+            {
+                id: 1,
+                year: 2008,
+                model: "Toyota 4Runner SR5 4WD",
+                price: 13500,
+                mileage: 218000,
+                city: "Montreal",
+                province: "QC",
+                transmission: "5-Speed Automatic",
+                condition: "Good - Minor surface rust on frame tail, treated annually with Krown.",
+                rustRating: "Minor (Krown Protected)",
+                source: "Facebook Marketplace",
+                url: "https://facebook.com/marketplace",
+                timeAgo: "22m ago",
+                image: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=600&q=80",
+                color: "Silver",
+                engine: "4.0L V6 1GR-FE"
+            },
+            {
+                id: 2,
+                year: 2006,
+                model: "Toyota 4Runner Sport Edition V6",
+                price: 11900,
+                mileage: 242000,
+                city: "Ottawa",
+                province: "ON",
+                transmission: "5-Speed Automatic",
+                condition: "Fair - X-REAS suspension replaced with standard bilsteins. Frame inspected by Toyota dealer.",
+                rustRating: "Moderate (Cleaned & Undercoated)",
+                source: "Kijiji Autos",
+                url: "https://kijiji.ca",
+                timeAgo: "1h ago",
+                image: "https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&w=600&q=80",
+                color: "Black",
+                engine: "4.0L V6 1GR-FE"
+            },
+            {
+                id: 3,
+                year: 2005,
+                model: "Toyota 4Runner Limited V8 4WD",
+                price: 14200,
+                mileage: 235000,
+                city: "Quebec City",
+                province: "QC",
+                transmission: "5-Speed Automatic",
+                condition: "Very Good - Full leather interior, timing belt done at 200k. Solid Ontario import frame.",
+                rustRating: "Clean Frame (No perforations)",
+                source: "LesPAC",
+                url: "https://lespac.com",
+                timeAgo: "3h ago",
+                image: "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=600&q=80",
+                color: "Magnetic Gray",
+                engine: "4.7L V8 2UZ-FE"
+            },
+            {
+                id: 4,
+                year: 2009,
+                model: "Toyota 4Runner SR5 V6",
+                price: 14800,
+                mileage: 198000,
+                city: "Toronto",
+                province: "ON",
+                transmission: "5-Speed Automatic",
+                condition: "Excellent - Lower mileage gem. Garage kept, non-smoker, fresh fluid changes.",
+                rustRating: "Pristine Frame",
+                source: "AutoTrader Canada",
+                url: "https://autotrader.ca",
+                timeAgo: "5h ago",
+                image: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=600&q=80",
+                color: "Super White",
+                engine: "4.0L V6 1GR-FE"
+            },
+            {
+                id: 5,
+                year: 2004,
+                model: "Toyota 4Runner SR5 4WD",
+                price: 8900,
+                mileage: 248000,
+                city: "Gatineau",
+                province: "QC",
+                transmission: "5-Speed Automatic",
+                condition: "Fair - Rocker panel paint bubbling, frame solid with standard rust scale.",
+                rustRating: "Typical Quebec Winter Rust",
+                source: "Facebook Marketplace",
+                url: "https://facebook.com/marketplace",
+                timeAgo: "1d ago",
+                image: "https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=600&q=80",
+                color: "Titanium",
+                engine: "4.0L V6 1GR-FE"
+            },
+            {
+                id: 6,
+                year: 2007,
+                model: "Toyota 4Runner SR5 V6",
+                price: 12500,
+                mileage: 210000,
+                city: "Hamilton",
+                province: "ON",
+                transmission: "5-Speed Automatic",
+                condition: "Good - New brakes and winter tires on steelies included.",
+                rustRating: "Clean (Rust Checked annually)",
+                source: "Kijiji Autos",
+                url: "https://kijiji.ca",
+                timeAgo: "1d ago",
+                image: "https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=600&q=80",
+                color: "Blue",
+                engine: "4.0L V6 1GR-FE"
+            }
+        ];
+
+        let currentProvinceFilter = 'ALL';
+
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', () => {
+            renderListings(listings);
+        });
+
+        // Filter state changes
+        function setProvinceFilter(prov) {
+            currentProvinceFilter = prov;
+            document.querySelectorAll('.province-pill').forEach(el => {
+                el.classList.remove('bg-red-600', 'text-white');
+                el.classList.add('bg-zinc-800', 'text-zinc-300');
+            });
+            const activePill = document.getElementById(`pill-${prov}`);
+            if(activePill) {
+                activePill.classList.remove('bg-zinc-800', 'text-zinc-300');
+                activePill.classList.add('bg-red-600', 'text-white');
+            }
+            filterListings();
+        }
+
+        function toggleAdvancedFilters() {
+            const drawer = document.getElementById('advancedFilters');
+            drawer.classList.toggle('hidden');
+        }
+
+        function updateFilters() {
+            const price = document.getElementById('maxPriceRange').value;
+            const km = document.getElementById('maxKmRange').value;
+            document.getElementById('priceVal').innerText = Number(price).toLocaleString();
+            document.getElementById('kmVal').innerText = km;
+            filterListings();
+        }
+
+        function filterListings() {
+            const searchTxt = document.getElementById('searchInput').value.toLowerCase();
+            const maxPrice = Number(document.getElementById('maxPriceRange').value);
+            const maxKm = Number(document.getElementById('maxKmRange').value) * 1000;
+            const sortBy = document.getElementById('sortBy').value;
+
+            let filtered = listings.filter(item => {
+                // Province check
+                if(currentProvinceFilter !== 'ALL' && item.province !== currentProvinceFilter) return false;
+                // Price & km check
+                if(item.price > maxPrice) return false;
+                if(item.mileage > maxKm) return false;
+                // Search text check
+                if(searchTxt) {
+                    const combined = `${item.model} ${item.city} ${item.province} ${item.year} ${item.condition}`.toLowerCase();
+                    if(!combined.includes(searchTxt)) return false;
+                }
+                return true;
+            });
+
+            // Sorting
+            if(sortBy === 'price-asc') {
+                filtered.sort((a,b) => a.price - b.price);
+            } else if(sortBy === 'km-asc') {
+                filtered.sort((a,b) => a.mileage - b.mileage);
+            } else {
+                filtered.sort((a,b) => b.id - a.id); // Newest found
+            }
+
+            renderListings(filtered);
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('maxPriceRange').value = 15000;
+            document.getElementById('maxKmRange').value = 250;
+            updateFilters();
+            setProvinceFilter('ALL');
+        }
+
+        // Render List HTML
+        function renderListings(data) {
+            const container = document.getElementById('listingsContainer');
+            const emptyState = document.getElementById('emptyState');
+            const countLabel = document.getElementById('resultsCount');
+
+            countLabel.innerText = `${data.length} 4Runner${data.length === 1 ? '' : 's'} found under $15k & <250k km`;
+
+            if(data.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            let html = '';
+
+            data.forEach(item => {
+                let rustBadgeColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+                if(item.rustRating.includes('Moderate') || item.rustRating.includes('Winter')) {
+                    rustBadgeColor = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+                }
+
+                html += `
+                <div onclick="openDetailModal(${item.id})" class="bg-zinc-900/80 border border-zinc-800/80 hover:border-zinc-700 rounded-2xl overflow-hidden shadow-lg transition active:scale-[0.99] cursor-pointer group">
+                    <div class="relative h-44 w-full bg-zinc-950 overflow-hidden">
+                        <img src="${item.image}" alt="${item.model}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://placehold.co/600x400/18181b/71717a?text=Toyota+4Runner'">
+                        <div class="absolute top-3 left-3 bg-zinc-950/80 backdrop-blur-md text-zinc-200 px-2.5 py-1 rounded-lg text-xs font-bold border border-zinc-800">
+                            $${item.price.toLocaleString()} CAD
+                        </div>
+                        <div class="absolute top-3 right-3 bg-red-600/90 text-white px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider">
+                            ${item.province}
+                        </div>
+                        <div class="absolute bottom-3 left-3 bg-black/70 backdrop-blur-md text-zinc-300 px-2 py-0.5 rounded-md text-[10px]">
+                            <i class="fa-solid fa-clock mr-1"></i>${item.timeAgo} via ${item.source}
+                        </div>
+                    </div>
+                    <div class="p-4 space-y-2.5">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h3 class="font-bold text-sm text-zinc-100 group-hover:text-red-500 transition">${item.year} ${item.model}</h3>
+                                <p class="text-xs text-zinc-400"><i class="fa-solid fa-location-dot mr-1 text-zinc-500"></i>${item.city}, ${item.province}</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 pt-1 text-xs">
+                            <div class="bg-zinc-950 px-3 py-2 rounded-xl border border-zinc-800/80">
+                                <span class="block text-[10px] text-zinc-500">Mileage</span>
+                                <span class="font-semibold text-zinc-200">${item.mileage.toLocaleString()} km</span>
+                            </div>
+                            <div class="bg-zinc-950 px-3 py-2 rounded-xl border border-zinc-800/80">
+                                <span class="block text-[10px] text-zinc-500">Engine / Trans</span>
+                                <span class="font-semibold text-zinc-200 truncate block">${item.engine.split(' ')[0]} V6/V8</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-1">
+                            <span class="text-[11px] px-2.5 py-1 rounded-lg border font-medium ${rustBadgeColor}">
+                                <i class="fa-solid fa-shield-halved mr-1"></i>${item.rustRating}
+                            </span>
+                            <span class="text-xs text-red-500 font-medium group-hover:underline flex items-center space-x-1">
+                                <span>Inspect Specs</span>
+                                <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Modal Controls
+        function openDetailModal(id) {
+            const item = listings.find(l => l.id === id);
+            if(!item) return;
+
+            const modalContent = document.getElementById('modalContent');
+            modalContent.innerHTML = `
+                <div class="flex items-center justify-between pb-2 border-b border-zinc-800">
+                    <div>
+                        <span class="text-[10px] bg-red-600/10 text-red-500 border border-red-600/20 px-2 py-0.5 rounded font-bold">${item.province} Listing</span>
+                        <h2 class="font-bold text-base text-zinc-100 mt-1">${item.year} ${item.model}</h2>
+                    </div>
+                    <button onclick="closeDetailModal()" class="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-zinc-400 hover:text-white transition"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+
+                <div class="relative h-52 rounded-xl overflow-hidden bg-zinc-950">
+                    <img src="${item.image}" alt="${item.model}" class="w-full h-full object-cover">
+                    <div class="absolute bottom-3 right-3 bg-zinc-950/90 text-white font-bold px-3 py-1.5 rounded-lg text-sm border border-zinc-800">
+                        $${item.price.toLocaleString()} CAD
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 text-center text-xs">
+                    <div class="bg-zinc-950 p-2.5 rounded-xl border border-zinc-800">
+                        <span class="text-zinc-500 block text-[10px]">Mileage</span>
+                        <span class="font-bold text-zinc-200">${item.mileage.toLocaleString()} km</span>
+                    </div>
+                    <div class="bg-zinc-950 p-2.5 rounded-xl border border-zinc-800">
+                        <span class="text-zinc-500 block text-[10px]">Location</span>
+                        <span class="font-bold text-zinc-200">${item.city}, ${item.province}</span>
+                    </div>
+                    <div class="bg-zinc-950 p-2.5 rounded-xl border border-zinc-800">
+                        <span class="text-zinc-500 block text-[10px]">Source</span>
+                        <span class="font-bold text-zinc-200">${item.source}</span>
+                    </div>
+                </div>
+
+                <!-- Frame Rust Crucial Inspection Note -->
+                <div class="bg-red-950/20 border border-red-500/30 p-3.5 rounded-xl space-y-1">
+                    <div class="flex items-center space-x-2 text-red-400 font-semibold text-xs">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <span>Frame & Rust Condition Report</span>
+                    </div>
+                    <p class="text-xs text-zinc-300">${item.condition}</p>
+                </div>
+
+                <div class="space-y-1.5 text-xs">
+                    <div class="flex justify-between py-1 border-b border-zinc-800">
+                        <span class="text-zinc-500">Engine Type</span>
+                        <span class="text-zinc-200 font-medium">${item.engine}</span>
+                    </div>
+                    <div class="flex justify-between py-1 border-b border-zinc-800">
+                        <span class="text-zinc-500">Transmission</span>
+                        <span class="text-zinc-200 font-medium">${item.transmission}</span>
+                    </div>
+                    <div class="flex justify-between py-1 border-b border-zinc-800">
+                        <span class="text-zinc-500">Exterior Color</span>
+                        <span class="text-zinc-200 font-medium">${item.color}</span>
+                    </div>
+                    <div class="flex justify-between py-1">
+                        <span class="text-zinc-500">Discovered</span>
+                        <span class="text-zinc-200 font-medium">${item.timeAgo}</span>
+                    </div>
+                </div>
+
+                <div class="flex space-x-2 pt-2">
+                    <button onclick="copyListingLink('${item.url}')" class="flex-1 bg-zinc-800 hover:bg-zinc-700 py-3 rounded-xl font-medium text-xs flex items-center justify-center space-x-2 transition">
+                        <i class="fa-solid fa-copy"></i>
+                        <span>Copy Link</span>
+                    </button>
+                    <a href="${item.url}" target="_blank" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-medium text-xs flex items-center justify-center space-x-2 shadow-lg shadow-red-600/30 transition">
+                        <span>Open Original Ad</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                    </a>
+                </div>
+            `;
+
+            const modal = document.getElementById('detailModal');
+            modal.classList.remove('hidden');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+        }
+
+        function openScraperModal() {
+            document.getElementById('scraperModal').classList.remove('hidden');
+        }
+        function closeScraperModal() {
+            document.getElementById('scraperModal').classList.add('hidden');
+        }
+
+        function openAlertsModal() {
+            document.getElementById('alertsModal').classList.remove('hidden');
+        }
+        function closeAlertsModal() {
+            document.getElementById('alertsModal').classList.add('hidden');
+        }
+
+        // Simulate New Listing arriving live
+        function simulateNewListing() {
+            const citiesQC = ['Montreal', 'Quebec City', 'Laval', 'Gatineau', 'Sherbrooke', 'Trois-Rivières'];
+            const citiesON = ['Toronto', 'Ottawa', 'Mississauga', 'Hamilton', 'London', 'Kingston'];
+            const provs = ['QC', 'ON'];
+            const prov = provs[Math.floor(Math.random() * provs.length)];
+            const city = prov === 'QC' ? citiesQC[Math.floor(Math.random() * citiesQC.length)] : citiesON[Math.floor(Math.random() * citiesON.length)];
+            
+            const newId = listings.length + 1;
+            const newPrice = Math.floor(Math.random() * 6000) + 9000;
+            const newKm = Math.floor(Math.random() * 50000) + 180000;
+            const newYear = Math.floor(Math.random() * 6) + 2004;
+
+            const newListing = {
+                id: newId,
+                year: newYear,
+                model: `Toyota 4Runner SR5 4WD`,
+                price: newPrice,
+                mileage: newKm,
+                city: city,
+                province: prov,
+                transmission: "5-Speed Automatic",
+                condition: "Freshly posted! Frame checked clean with minor surface patina.",
+                rustRating: "Inspected Clean",
+                source: "Facebook Marketplace",
+                url: "https://facebook.com/marketplace",
+                timeAgo: "Just now",
+                image: "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=600&q=80",
+                color: "Black",
+                engine: "4.0L V6 1GR-FE"
+            };
+
+            listings.unshift(newListing);
+            filterListings();
+            showToast(`🔥 New 4Runner found in ${city}, ${prov} for $${newPrice.toLocaleString()}!`);
+        }
+
+        // Clipboard helper fallback
+        function copyListingLink(url) {
+            const dummy = document.createElement('textarea');
+            document.body.appendChild(dummy);
+            dummy.value = url;
+            dummy.select();
+            document.execCommand('copy');
+            document.body.removeChild(dummy);
+            showToast('Listing URL copied to clipboard!');
+        }
+
+        // Toast notification system
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastText').innerText = message;
+            toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-[-10px]');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-[-10px]');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
