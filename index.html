@@ -1,164 +1,167 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>4Runner Finder QC & ON</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        toyota: { 600: '#dc2626', 700: '#b91c1c' }
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- FontAwesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        /* Custom scrollbars for smooth mobile feeling */
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-track { background: #18181b; }
-        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 2px; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>4Runner Finder QC & ON</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --accent: #ef4444;
+      --text: #f8fafc;
+      --subtext: #94a3b8;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text);
+      margin: 0;
+      padding: 16px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin: 0 0 8px 0;
+      color: #ffffff;
+    }
+    p {
+      color: var(--subtext);
+      font-size: 0.9rem;
+      margin: 0;
+    }
+    .filter-card {
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+    }
+    .filter-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+    }
+    label {
+      font-size: 0.8rem;
+      color: var(--subtext);
+      margin-bottom: 4px;
+    }
+    input, select {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      margin-top: 12px;
+      background-color: var(--accent);
+      color: white;
+      text-align: center;
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 1rem;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-secondary {
+      background-color: #3b82f6;
+    }
+    .btn-green {
+      background-color: #10b981;
+    }
+    .section-title {
+      font-size: 1.1rem;
+      margin: 24px 0 12px 0;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 8px;
+    }
+  </style>
 </head>
-<body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col antialiased selection:bg-red-600 selection:text-white">
-
-    <!-- Top Navigation Bar -->
-    <header class="sticky top-0 z-40 bg-zinc-900/90 backdrop-blur-md border-b border-zinc-800 px-4 py-3">
-        <div class="max-w-md mx-auto flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-                <div class="bg-red-600 p-2 rounded-xl text-white shadow-lg shadow-red-600/30">
-                    <i class="fa-solid fa-truck-monster text-lg"></i>
-                </div>
-                <div>
-                    <h1 class="font-bold text-base leading-tight tracking-tight">4Runner Radar</h1>
-                    <p class="text-xs text-zinc-400">QC & ON • &lt; $15K • &lt; 250k km</p>
-                </div>
-            </div>
-            <div class="flex items-center space-x-2">
-                <button onclick="openScraperModal()" class="relative bg-zinc-800 hover:bg-zinc-700 p-2.5 rounded-xl text-zinc-300 transition active:scale-95" title="Scraper Status">
-                    <i class="fa-solid fa-satellite-dish text-sm"></i>
-                    <span class="absolute top-1 right-1 w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                </button>
-                <button onclick="openAlertsModal()" class="bg-zinc-800 hover:bg-zinc-700 p-2.5 rounded-xl text-zinc-300 transition active:scale-95" title="Saved Alerts">
-                    <i class="fa-solid fa-bell text-sm"></i>
-                </button>
-            </div>
-        </div>
+<body>
+  <div class="container">
+    <header>
+      <h1>🛞 Toyota 4Runner Finder</h1>
+      <p>Quebec & Ontario Auto-Search Launchpad</p>
     </header>
 
-    <!-- Main Content Container -->
-    <main class="flex-1 max-w-md w-full mx-auto p-4 pb-24 space-y-4">
-
-        <!-- Search & Filter Bar -->
-        <div class="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-3.5 space-y-3 backdrop-blur-sm shadow-xl">
-            <div class="relative">
-                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-zinc-500 text-sm"></i>
-                <input type="text" id="searchInput" oninput="filterListings()" placeholder="Search city, trim, year (e.g. SR5, Montreal)..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-red-600 transition">
-            </div>
-
-            <!-- Quick Filter Pills -->
-            <div class="flex items-center space-x-2 overflow-x-auto pb-1 no-scrollbar text-xs">
-                <button onclick="setProvinceFilter('ALL')" id="pill-ALL" class="province-pill px-3 py-1.5 rounded-lg font-medium whitespace-nowrap bg-red-600 text-white transition">All QC & ON</button>
-                <button onclick="setProvinceFilter('QC')" id="pill-QC" class="province-pill px-3 py-1.5 rounded-lg font-medium whitespace-nowrap bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition">Quebec only</button>
-                <button onclick="setProvinceFilter('ON')" id="pill-ON" class="province-pill px-3 py-1.5 rounded-lg font-medium whitespace-nowrap bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition">Ontario only</button>
-                <button onclick="toggleAdvancedFilters()" class="px-3 py-1.5 rounded-lg font-medium whitespace-nowrap bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition flex items-center space-x-1">
-                    <i class="fa-solid fa-sliders text-[10px]"></i>
-                    <span>Filters</span>
-                </button>
-            </div>
-
-            <!-- Expandable Advanced Filters Drawer -->
-            <div id="advancedFilters" class="hidden pt-3 border-t border-zinc-800/80 space-y-3 text-xs">
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-zinc-400 mb-1">Max Price: $<span id="priceVal">15,000</span></label>
-                        <input type="range" id="maxPriceRange" min="5000" max="15000" step="500" value="15000" oninput="updateFilters()" class="w-full accent-red-600 bg-zinc-800 rounded-lg h-2 cursor-pointer">
-                    </div>
-                    <div>
-                        <label class="block text-zinc-400 mb-1">Max Mileage: <span id="kmVal">250</span>k km</label>
-                        <input type="range" id="maxKmRange" min="150" max="250" step="5" value="250" oninput="updateFilters()" class="w-full accent-red-600 bg-zinc-800 rounded-lg h-2 cursor-pointer">
-                    </div>
-                </div>
-                <div class="flex items-center justify-between pt-1">
-                    <span class="text-zinc-400">Sort by:</span>
-                    <select id="sortBy" onchange="filterListings()" class="bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1 text-zinc-300 focus:outline-none focus:border-red-600">
-                        <option value="newest">Newest Found</option>
-                        <option value="price-asc">Price: Low to High</option>
-                        <option value="km-asc">Mileage: Lowest</option>
-                    </select>
-                </div>
-            </div>
+    <div class="filter-card">
+      <div class="filter-grid">
+        <div class="input-group">
+          <label>Max Price ($ CAD)</label>
+          <input type="number" id="maxPrice" value="15000">
         </div>
-
-        <!-- Results Header & Stats -->
-        <div class="flex items-center justify-between px-1">
-            <span id="resultsCount" class="text-xs font-medium text-zinc-400">Loading active listings...</span>
-            <div class="flex items-center space-x-2">
-                <span class="inline-flex items-center text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium">
-                    <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1.5 animate-pulse"></span> Live Feeds Active
-                </span>
-            </div>
+        <div class="input-group">
+          <label>Max Odometer (km)</label>
+          <input type="number" id="maxKm" value="250000">
         </div>
-
-        <!-- Listings Container -->
-        <div id="listingsContainer" class="space-y-3.5">
-            <!-- Dynamic Cards Injected Here -->
-        </div>
-
-        <!-- Empty State (Hidden by default) -->
-        <div id="emptyState" class="hidden text-center py-12 px-4 space-y-3">
-            <div class="w-14 h-14 bg-zinc-900 border border-zinc-800 rounded-full flex items-center justify-center mx-auto text-zinc-500 text-xl">
-                <i class="fa-solid fa-car-burst"></i>
-            </div>
-            <h3 class="font-semibold text-zinc-200">No 4Runners match criteria</h3>
-            <p class="text-xs text-zinc-400 max-w-xs mx-auto">Try loosening your price or mileage filters, or set a push alert to be notified instantly when one drops.</p>
-            <button onclick="resetFilters()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-xs font-medium transition">Reset Filters</button>
-        </div>
-
-    </main>
-
-    <!-- Floating Bottom Action Bar -->
-    <div class="fixed bottom-0 left-0 right-0 z-30 bg-zinc-900/95 backdrop-blur-md border-t border-zinc-800 p-3">
-        <div class="max-w-md mx-auto flex items-center justify-between gap-3">
-            <button onclick="openAlertsModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium py-2.5 px-4 rounded-xl text-xs flex items-center justify-center space-x-2 transition active:scale-95">
-                <i class="fa-solid fa-bell text-red-500"></i>
-                <span>Save Alert & Push</span>
-            </button>
-            <button onclick="simulateNewListing()" class="bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 px-4 rounded-xl text-xs flex items-center justify-center space-x-2 shadow-lg shadow-red-600/30 transition active:scale-95">
-                <i class="fa-solid fa-bolt"></i>
-                <span>Simulate New Find</span>
-            </button>
-        </div>
+      </div>
+      <div class="input-group" style="margin-top: 12px;">
+        <label>Region</label>
+        <select id="region">
+          <option value="QC_ON">All Quebec & Ontario</option>
+          <option value="QC">Quebec Only</option>
+          <option value="ON">Ontario Only</option>
+        </select>
+      </div>
     </div>
 
-    <!-- Vehicle Detail Modal -->
-    <div id="detailModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity">
-        <div class="bg-zinc-900 border border-zinc-800 w-full max-w-md rounded-t-3xl sm:rounded-2xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
-            <div id="modalContent" class="p-5 space-y-4">
-                <!-- Injected via JS -->
-            </div>
-        </div>
-    </div>
+    <div class="section-title">Launch Live Filtered Searches</div>
 
-    <!-- Scraper Status Modal -->
-    <div id="scraperModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-zinc-900 border border-zinc-800 w-full max-w-md rounded-2xl p-5 space-y-4 shadow-2xl">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-satellite-dish text-red-500"></i>
-                    <h3 class="font-bold text-sm">Aggregator & Scraper Status</h3>
-                </div>
-                <button onclick="closeScraperModal()" class="text-zinc-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+    <button onclick="openAutoTrader()" class="btn">Search AutoTrader.ca</button>
+    <button onclick="openKijiji()" class="btn btn-secondary">Search Kijiji Autos</button>
+    <button onclick="openFacebook()" class="btn btn-green">Search Facebook Marketplace</button>
+  </div>
+
+  <script>
+    function openAutoTrader() {
+      const price = document.getElementById('maxPrice').value;
+      const km = document.getElementById('maxKm').value;
+      const region = document.getElementById('region').value;
+
+      let locParam = "provinces=ON%2CQC";
+      if (region === "QC") locParam = "provinces=QC";
+      if (region === "ON") locParam = "provinces=ON";
+
+      const url = `https://www.autotrader.ca/cars/toyota/4runner/?rcp=100&rcs=0&srt=35&priceTo=${price}&odometerTo=${km}&${locParam}`;
+      window.open(url, '_blank');
+    }
+
+    function openKijiji() {
+      const price = document.getElementById('maxPrice').value;
+      const km = document.getElementById('maxKm').value;
+      const url = `https://www.kijijiautos.ca/cars/toyota/4runner/#price-max=${price}&kilometer-max=${km}`;
+      window.open(url, '_blank');
+    }
+
+    function openFacebook() {
+      const price = document.getElementById('maxPrice').value;
+      const km = document.getElementById('maxKm').value;
+      const url = `https://www.facebook.com/marketplace/category/vehicles?maxPrice=${price}&maxMiles=${km}&query=toyota%204runner`;
+      window.open(url, '_blank');
+    }
+  </script>
+</body>
+</html>
+zinc-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <p class="text-xs text-zinc-400">Our background workers poll Canadian automotive classified platforms every 15 minutes for fresh 4Runner deals under your thresholds.</p>
             
